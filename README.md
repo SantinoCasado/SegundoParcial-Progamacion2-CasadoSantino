@@ -1,3 +1,3 @@
 Casado Santino
 ------------------
-![Parcial](UML-SegundoParcial.png)
+![Parcial](UML-SegunParcial.png)
