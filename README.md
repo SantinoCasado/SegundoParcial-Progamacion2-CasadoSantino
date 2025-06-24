@@ -1,1 +1,3 @@
-# SegundoParcial-Progamacion2
+Casado Santino
+------------------
+![Parcial](UML-SegundoParcial.png)
