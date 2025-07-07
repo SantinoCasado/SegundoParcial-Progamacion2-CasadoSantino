@@ -1,8 +1,10 @@
-
 package models;
 
+import Exceptions.ProductFarmaVencidoException;
 import Interfaces.ISerializableCsv;
+import Validaciones.ValidadorProductosFarmaceuticos;
 import java.time.LocalDate;
+import java.util.Objects;
 
 public abstract class ProductoFarmaceutico implements ISerializableCsv {
     protected String nombreComercial;
@@ -14,21 +16,26 @@ public abstract class ProductoFarmaceutico implements ISerializableCsv {
         this.dosis = dosis;
         this.fechaVencimiento = fechaVencimiento;
     }
+    
+    public ProductoFarmaceutico(){
+    }
 
     public String getNombreComercial() {
         return nombreComercial;
     }
 
     public void setNombreComercial(String nombreComercial) {
+        ValidadorProductosFarmaceuticos.validarNombre(nombreComercial);
         this.nombreComercial = nombreComercial;
     }
 
 
-    public String getDosisMedida() {
+    public String getDosis() {
         return dosis;
     }
 
-    public void setDosisMedida(String dosisMedida) {
+    public void setDosis(String dosisMedida) {
+        ValidadorProductosFarmaceuticos.validarDosis(dosis);
         this.dosis = dosisMedida;
     }
 
@@ -37,9 +44,33 @@ public abstract class ProductoFarmaceutico implements ISerializableCsv {
     }
 
     public void setFechaVencimiento(LocalDate fechaVencimiento) {
-        this.fechaVencimiento = fechaVencimiento;
+        //Corrigo y agrego validacion en el set Fecha vencimiento
+        ValidadorProductosFarmaceuticos.ValidarFechaVencimiento(fechaVencimiento);
+        this.fechaVencimiento = fechaVencimiento;    
     }
 
+    //Agrego el equals para revisar repetidos
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ProductoFarmaceutico other = (ProductoFarmaceutico) obj;
+        if (!Objects.equals(this.nombreComercial, other.nombreComercial)) {
+            return false;
+        }
+        if (!Objects.equals(this.dosis, other.dosis)) {
+            return false;
+        }
+        return Objects.equals(this.fechaVencimiento, other.fechaVencimiento);
+    }
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -52,15 +83,6 @@ public abstract class ProductoFarmaceutico implements ISerializableCsv {
     
     @Override
     public String toCSV(){
-        StringBuilder sb = new StringBuilder();
-        
-
-        sb.append(this.nombreComercial).append(",");
-        sb.append(this.dosis).append(",");
-        sb.append(this.fechaVencimiento).append(",");
-        
-        return sb.toString();
-
+        return nombreComercial + "," + dosis + "," + fechaVencimiento;
     }
-
 }

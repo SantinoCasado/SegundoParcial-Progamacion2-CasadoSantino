@@ -1,6 +1,8 @@
 package Controllers;
 
 import Exceptions.DatoErroneoException;
+import Exceptions.ProductFarmaVencidoException;
+import Validaciones.ValidadorProductosFarmaceuticos;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -11,6 +13,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.ResourceBundle;
 import javafx.fxml.Initializable;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.stage.Stage;
 import models.Medicamento;
@@ -19,33 +22,26 @@ import models.Suplemento;
 
 
 public class FormularioController implements Initializable {
-    //Botones
-    @FXML
-    private Button btnAceptar;
-    @FXML
-    private Button btnCancelar;
-    @FXML
-    private ChoiceBox<String> cbTipoProd;
-    
-    //Label
-    @FXML
-    private Label lblDatoExtra;
-    
-    //Date
-    @FXML
-    private DatePicker dpFechaVencimiento;
-    
-    //TxT
-    @FXML
-    private TextField txtDatoExtra;
+    // Botones
+    @FXML private Button btnAceptar;
+    @FXML private Button btnCancelar;
 
-    @FXML
-    private TextField txtDosis;
+    // Campos de entrada
+    @FXML private TextField txtNombre;
+    @FXML private TextField txtDosis;
+    @FXML private DatePicker dpFechaVencimiento;
+    @FXML private TextField txtObjetivo;
 
-    @FXML
-    private TextField txtNombre;
-    
+    // ChoiceBox y CheckBox
+    @FXML private ChoiceBox<String> cbTipoProd;
+    @FXML private CheckBox cbReceta;
+
+    // Labels
+    @FXML private Label lblObjetivo;
+    @FXML private Label lblReceta;
+
     private ProductoFarmaceutico producto;
+
     
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -60,98 +56,124 @@ public class FormularioController implements Initializable {
         //Dependiento del valor del choiseBox seteo un valor al label del datoExtra
         switch(cbTipoProd.getValue()){
             
-            case "MEDICAMENTO" -> lblDatoExtra.setText("Requiere receta Médica? [Si | No]");
+            case "MEDICAMENTO" -> {
+                // Ocultar campos de objetivo
+                lblObjetivo.setVisible(false);
+                txtObjetivo.setVisible(false);
+                lblObjetivo.setManaged(false);
+                txtObjetivo.setManaged(false);
+
+                // Mostrar campos de receta
+                lblReceta.setVisible(true);
+                cbReceta.setVisible(true);
+                lblReceta.setManaged(true);
+                cbReceta.setManaged(true);
+
+            }
             
-            case "SUPLEMENTO" -> lblDatoExtra.setText("Objetivo");
-        
+            case "SUPLEMENTO" -> {
+                // Mostrar campos de objetivo
+                lblObjetivo.setVisible(true);
+                txtObjetivo.setVisible(true);
+                lblObjetivo.setManaged(true);
+                txtObjetivo.setManaged(true);
+
+                // Ocultar campos de receta
+                lblReceta.setVisible(false);
+                cbReceta.setVisible(false);
+                lblReceta.setManaged(false);
+                cbReceta.setManaged(false);
+        }
         }
     }   
     
     //Metodos
     @FXML
     void aceptar(ActionEvent event) {
+        //Seteo los valores comunes de los dos
+         String tipo = cbTipoProd.getValue();
+         String nombre = txtNombre.getText();
+         String dosis = txtDosis.getText();
+         LocalDate fechaVencimiento = dpFechaVencimiento.getValue();
+
+          try {
+            ValidadorProductosFarmaceuticos.validarNombre(nombre);
+            ValidadorProductosFarmaceuticos.validarDosis(dosis);
+            ValidadorProductosFarmaceuticos.ValidarFechaVencimiento(fechaVencimiento);
+            //Si se esta editando
+            if (producto != null) {
+                // Actualiza atributos comunes
+                producto.setNombreComercial(nombre);
+                producto.setDosis(dosis);
+                producto.setFechaVencimiento(fechaVencimiento);
                 
-        // Obtiene los datos del formulario
-        String tipo = cbTipoProd.getValue();
-        String nombre = txtNombre.getText();
-        String dosis = txtDosis.getText();
-        LocalDate fechaVencimiento = dpFechaVencimiento.getValue();
-        String datoExtra = txtDatoExtra.getText().toUpperCase();
-        
-        // Si vehiculo != null, significa que está editando un vehículo existente:
-        if (producto != null) {
-            
-            //Actualiza sus atributos comunes.
-            producto.setNombreComercial(nombre);
-            producto.setDosisMedida(dosis);
-            producto.setFechaVencimiento(fechaVencimiento);
-            
-            //Según el tipo, castea el objeto y actualiza el atributo específico (cantPuertas, cilindrada, capacidadCarga).
-            switch(tipo){
-                case "MEDICAMENTO":
-                    if (!datoExtra.equalsIgnoreCase("SI") && !datoExtra.equalsIgnoreCase("NO")) {
-                        throw new DatoErroneoException("SOLO SE ACEPTA COMO RESPUESTA [Si | No]");
+                //seteo y pareceo segun cada caso
+                switch (tipo) {
+                    case "MEDICAMENTO" -> {
+                        boolean requiereReceta = cbReceta.isSelected();
+                        ((Medicamento) producto).setRequerimientoRecetaMediica(requiereReceta);
                     }
-
-                        if (datoExtra.equalsIgnoreCase("SI")){
-                        ((Medicamento)producto).setRequerimientoRecetaMediica(true);
-                    } else {
-                        ((Medicamento)producto).setRequerimientoRecetaMediica(false);
+                    case "SUPLEMENTO" -> {
+                        String objetivo = txtObjetivo.getText().trim();
+                        ValidadorProductosFarmaceuticos.validarObjetivo(objetivo);
+                        ((Suplemento) producto).setObjetivo(objetivo);
                     }
-
-                case "SUPLEMENTO":
-                        ((Suplemento)producto).setObjetivo(datoExtra);
+                }
+            } else {
+                // Crear nuevo objeto según el tipo
+                switch (tipo) {
+                    case "MEDICAMENTO" -> {
+                        boolean requiereReceta = cbReceta.isSelected();
+                        this.producto = new Medicamento(requiereReceta, nombre, dosis, fechaVencimiento);
+                    }
+                    case "SUPLEMENTO" -> {
+                        String objetivo = txtObjetivo.getText().trim();
+                        this.producto = new Suplemento(objetivo, nombre, dosis, fechaVencimiento);
+                    }
+                }
             }
+            cerrar();
+        } catch (DatoErroneoException | ProductFarmaVencidoException e) {
+            // Podés mostrar un Alert personalizado si querés
+            System.err.println("Error: " + e.getMessage());
         }
-        // Si vehiculo == null, entonces está creando un nuevo vehículo:
-        else{
-            
-            //Usa el switch(tipo) para instanciar la subclase correspondiente (Auto, Moto, Camioneta) con todos los datos.
-            switch(tipo){
-            
-                case "MEDICAMENTO":
-                    if (datoExtra.equalsIgnoreCase("SI")){
-                         this.producto = new Medicamento(true, nombre, dosis, fechaVencimiento);
-                    } else {
-                         this.producto = new Medicamento(false, nombre, dosis, fechaVencimiento);
-                    }
-            
-                case "SUPLEMENTO":
-                    this.producto = new Suplemento(datoExtra, nombre, dosis, fechaVencimiento);                  
-            
-            }
-        }
-        this.cerrar();
     }
     
-
+    
     @FXML
     void cancelar(ActionEvent event) {
         this.cerrar();
     }
     
     public void setProducto(ProductoFarmaceutico producto) {
-        this.producto = producto; 
-        if(producto != null){
-            this.txtNombre.setText(producto.getNombreComercial());
-            this.txtDosis.setText(producto.getDosisMedida());
-            this.dpFechaVencimiento.setValue(producto.getFechaVencimiento());
-            
-            if( producto instanceof Medicamento medicamento) {
-                if (medicamento.isRequerimientoRecetaMediica()) {
-                    this.txtDatoExtra.setText("Si");
-                } else {
-                    this.txtDatoExtra.setText("No");
-                }
-                cbTipoProd.setValue("Medicamento");
-            }
-            if (producto instanceof Suplemento suplemento) {
-                this.txtDatoExtra.setText(String.valueOf(suplemento.getObjetivo()));
-                cbTipoProd.setValue("Suplemento");
-            }
+        this.producto = producto;
 
+        if (producto != null) {
+            // Campos comunes
+            txtNombre.setText(producto.getNombreComercial());
+            txtDosis.setText(producto.getDosis());
+            dpFechaVencimiento.setValue(producto.getFechaVencimiento());
+
+            if (producto instanceof Medicamento medicamento) {
+                cbTipoProd.setValue("MEDICAMENTO");
+                cbReceta.setSelected(medicamento.isRequerimientoRecetaMediica());
+            } else if (producto instanceof Suplemento suplemento) {
+                cbTipoProd.setValue("SUPLEMENTO");
+                txtObjetivo.setText(suplemento.getObjetivo());
+            }
+        } else {
+            // Si es nuevo, limpiar campos
+            txtNombre.clear();
+            txtDosis.clear();
+            dpFechaVencimiento.setValue(null);
+            txtObjetivo.clear();
+            cbReceta.setSelected(false);
+            cbTipoProd.setValue("MEDICAMENTO");
         }
-    }
+
+    // Aplicar visibilidad según el tipo seleccionado
+    cambiadoTipo(null);
+}
     
     public ProductoFarmaceutico getProductoFarmaceutico(){
         return this.producto;

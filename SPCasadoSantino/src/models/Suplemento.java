@@ -1,6 +1,7 @@
 package models;
 
 import Interfaces.ISerializableCsv;
+import Validaciones.ValidadorProductosFarmaceuticos;
 import java.time.LocalDate;
 
 public class Suplemento extends ProductoFarmaceutico implements ISerializableCsv {
@@ -10,12 +11,17 @@ public class Suplemento extends ProductoFarmaceutico implements ISerializableCsv
         super(nombreComercial, dosis, fechaVencimiento);
         this.objetivo = objetivo;
     }
-
+    
+    public Suplemento(){
+        
+    }
+    
     public String getObjetivo() {
         return objetivo;
     }
 
     public void setObjetivo(String objetivo) {
+        ValidadorProductosFarmaceuticos.validarObjetivo(objetivo);
         this.objetivo = objetivo;
     }
 
@@ -33,7 +39,7 @@ public class Suplemento extends ProductoFarmaceutico implements ISerializableCsv
         StringBuilder sb = new StringBuilder();
         sb.append(super.toCSV()).append(",Suplemento");    
 
-  
+
         sb.append(",").append(this.objetivo);
         
         return sb.toString();
@@ -43,7 +49,7 @@ public class Suplemento extends ProductoFarmaceutico implements ISerializableCsv
     public Suplemento fromCSV(String line) {
         // Divide la línea CSV en partes usando split(",").         
         String[] result = line.split(",");
- 
+       
         // Extrae los valores en orden y los convierte a sus tipos correspondientes.        
         String nombre = result[0];
         String dosis = result[1];

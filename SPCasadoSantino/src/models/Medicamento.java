@@ -12,6 +12,9 @@ public class Medicamento extends ProductoFarmaceutico implements ISerializableCs
         this.requerimientoRecetaMediica = requerimientoRecetaMediica;
     }
     
+    public Medicamento(){
+    }
+    
     public boolean isRequerimientoRecetaMediica() {
         return requerimientoRecetaMediica;
     }
@@ -19,7 +22,6 @@ public class Medicamento extends ProductoFarmaceutico implements ISerializableCs
     public void setRequerimientoRecetaMediica(boolean requerimientoRecetaMediica) {
         this.requerimientoRecetaMediica = requerimientoRecetaMediica;
     }
-    
     
     @Override
     public String toString() {
@@ -33,9 +35,8 @@ public class Medicamento extends ProductoFarmaceutico implements ISerializableCs
 
     public String toCSV(){
         StringBuilder sb = new StringBuilder();
-        sb.append(super.toCSV()).append(",Medicamento");    
+        sb.append(super.toCSV()).append(", Medicamento");    
 
-  
         sb.append(",").append(this.requerimientoRecetaMediica);
         
         return sb.toString();
@@ -43,20 +44,16 @@ public class Medicamento extends ProductoFarmaceutico implements ISerializableCs
     
     @Override
     public Medicamento fromCSV(String line) {
-        // Divide la línea CSV en partes usando split(",").         
         String[] result = line.split(",");
- 
-        // Extrae los valores en orden y los convierte a sus tipos correspondientes.        
+
         String nombre = result[0];
         String dosis = result[1];
-        LocalDate fecha = LocalDate.parse(result[2]); // si el CSV tiene formato ISO (yyyy-MM-dd)
+        LocalDate fecha = LocalDate.parse(result[2]);
         String tipo = result[3];
-        boolean requerimientoRecetaMedica = Boolean.parseBoolean(result[4]);
-        
-        // Crea un nuevo objeto Moto con esos valores.
-        Medicamento medicamento = new Medicamento(requerimientoRecetaMedica, nombre, dosis, fecha);
-        
-        return medicamento;
+        boolean requiereReceta = Boolean.parseBoolean(result[4].trim());
+
+        return new Medicamento(requiereReceta, nombre, dosis, fecha);
     }
+
 
 }
